@@ -1,10 +1,10 @@
-import { db } from '@/lib/db/drizzle';
-import { eInvoices, camInvMerchants, auditLogs } from '@/lib/db/schema';
+import { db } from '@/lib/db';
+import { eInvoices, camInvMerchants, camInvAuditLogs } from '@/lib/db/schema';
 import { eq, and } from 'drizzle-orm';
-import { logger } from '@/lib/utils/logger';
+import { logger } from './error-handler';
 
 export interface WebhookEvent {
-  type: 'DOCUMENT.DELIVERED' | 'DOCUMENT.RECEIVED' | 'DOCUMENT.STATUS_UPDATED' | 'ENTITY.REVOKED';
+  type: 'DOCUMENT.DELIVERED' | 'DOCUMENT.RECEIVED' | 'DOCUMENT.STATUS_UPDATED' | 'DOCUMENT.VALIDATED' | 'DOCUMENT.VALIDATION_FAILED' | 'DOCUMENT.ACCEPTED' | 'DOCUMENT.REJECTED' | 'ENTITY.REVOKED';
   document_id?: string;
   endpoint_id?: string;
   status?: string;
@@ -52,7 +52,7 @@ export class CamInvWebhookService {
           return { success: true, message: 'Unknown event type, ignored' };
       }
     } catch (error) {
-      logger.error('Error processing webhook event', error, { event });
+      logger.error('Error processing webhook event', { error, event });
       return { success: false, message: 'Internal processing error' };
     }
   }
@@ -90,7 +90,7 @@ export class CamInvWebhookService {
           camInvStatus: 'delivered',
           sentAt: new Date(),
           camInvResponse: {
-            ...invoice.camInvResponse,
+            ...(invoice.camInvResponse || {}),
             delivered_at: new Date().toISOString(),
             endpoint_id
           },
@@ -122,7 +122,7 @@ export class CamInvWebhookService {
       return { success: true, message: 'Document delivery processed' };
 
     } catch (error) {
-      logger.error('Error handling document delivery', error, { document_id });
+      logger.error('Error handling document delivery', { error, document_id });
       return { success: false, message: 'Database update failed' };
     }
   }
@@ -214,7 +214,7 @@ export class CamInvWebhookService {
           ...(status.toUpperCase() === 'DELIVERED' && invoice.status === 'submitted' && { sentAt: new Date() }),
           ...(internalStatus === 'validation_failed' && { rejectionReason: `Validation failed: ${status}` }),
           camInvResponse: {
-            ...invoice.camInvResponse,
+            ...(invoice.camInvResponse || {}),
             status_updated_at: new Date().toISOString(),
             endpoint_id,
             latest_status: status,
@@ -252,7 +252,7 @@ export class CamInvWebhookService {
       return { success: true, message: 'Document status update processed' };
 
     } catch (error) {
-      logger.error('Error handling document status update', error, { document_id, status });
+      logger.error('Error handling document status update', { error, document_id, status });
       return { success: false, message: 'Database update failed' };
     }
   }
@@ -299,7 +299,7 @@ export class CamInvWebhookService {
       return { success: true, message: 'Incoming document notification processed' };
 
     } catch (error) {
-      logger.error('Error handling incoming document', error, { document_id });
+      logger.error('Error handling incoming document', { error, document_id });
       return { success: false, message: 'Processing error' };
     }
   }
@@ -360,7 +360,7 @@ export class CamInvWebhookService {
       return { success: true, message: 'Entity revocation processed' };
 
     } catch (error) {
-      logger.error('Error handling entity revocation', error, { endpoint_id });
+      logger.error('Error handling entity revocation', { error, endpoint_id });
       return { success: false, message: 'Database update failed' };
     }
   }
@@ -457,7 +457,7 @@ export class CamInvWebhookService {
           ...(status.toUpperCase() === 'REJECTED' && { rejectedAt: new Date() }),
           ...(internalStatus === 'validation_failed' && { rejectionReason: `Validation failed: ${status}` }),
           camInvResponse: {
-            ...invoice.camInvResponse,
+            ...(invoice.camInvResponse || {}),
             status_updated_at: new Date().toISOString(),
             endpoint_id,
             latest_status: status,
@@ -496,7 +496,7 @@ export class CamInvWebhookService {
       return { success: true, message: `Document status updated to ${status}` };
 
     } catch (error) {
-      logger.error('Error updating document status', error, { document_id, status });
+      logger.error('Error updating document status', { error, document_id, status });
       return { success: false, message: 'Database update error' };
     }
   }
@@ -507,26 +507,26 @@ export class CamInvWebhookService {
   private async logWebhookEvent(
     teamId: number,
     action: string,
-    resourceType: string,
-    resourceId: number,
-    metadata: any
+    entityType: string,
+    entityId: number,
+    details: any
   ): Promise<void> {
     try {
-      await db.insert(auditLogs).values({
+      await db.insert(camInvAuditLogs).values({
         teamId,
         userId: null, // Webhook events don't have a specific user
         action,
-        resourceType,
-        resourceId,
-        metadata,
-        createdAt: new Date(),
+        entityType,
+        entityId,
+        details,
       });
     } catch (error) {
-      logger.error('Failed to log webhook event', error, {
+      logger.error('Failed to log webhook event', {
+        error,
         teamId,
         action,
-        resourceType,
-        resourceId
+        entityType,
+        entityId
       });
     }
   }

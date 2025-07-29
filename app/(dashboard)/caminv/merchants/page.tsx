@@ -385,9 +385,9 @@ export default async function MerchantsPage({ searchParams }: MerchantsPageProps
                 </div>
               </div>
               <div className="group">
-                <div className="flex items-start gap-3 sm:gap-4 p-3 sm:p-4 rounded-lg hover:bg-orange-50 transition-colors">
-                  <div className="p-1.5 sm:p-2 bg-orange-100 rounded-lg flex-shrink-0">
-                    <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-orange-600" />
+                <div className="flex items-start gap-3 sm:gap-4 p-3 sm:p-4 rounded-lg hover:bg-slate-50 transition-colors">
+                  <div className="p-1.5 sm:p-2 bg-slate-100 rounded-lg flex-shrink-0">
+                    <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-slate-600" />
                   </div>
                   <div className="min-w-0 flex-1">
                     <h4 className="font-semibold text-orange-900 mb-1 text-sm sm:text-base">API Access</h4>
