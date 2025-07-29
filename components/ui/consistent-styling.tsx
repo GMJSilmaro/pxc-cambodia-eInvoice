@@ -147,24 +147,52 @@ ConsistentButton.displayName = 'ConsistentButton';
 interface SectionHeaderProps {
   title: string;
   description?: string;
+  icon?: React.ReactNode;
   action?: React.ReactNode;
+  actions?: React.ReactNode;
+  backButton?: React.ReactNode;
   className?: string;
 }
 
-export function SectionHeader({ title, description, action, className }: SectionHeaderProps) {
+export function SectionHeader({
+  title,
+  description,
+  icon,
+  action,
+  actions,
+  backButton,
+  className
+}: SectionHeaderProps) {
+  // Use actions if provided, otherwise fall back to action for backward compatibility
+  const actionElement = actions || action;
+  
   return (
-    <div className={cn('flex items-start justify-between', className)}>
-      <div className="space-y-1">
-        <h2 className={textStyles.heading.h2}>{title}</h2>
-        {description && (
-          <p className={textStyles.body.normal}>{description}</p>
-        )}
-      </div>
-      {action && (
-        <div className="flex-shrink-0">
-          {action}
+    <div className={cn('space-y-4', className)}>
+      {backButton && (
+        <div className="flex items-center">
+          {backButton}
         </div>
       )}
+      <div className="flex items-start justify-between">
+        <div className="space-y-1">
+          <div className="flex items-center gap-3">
+            {icon && (
+              <div className="flex-shrink-0">
+                {icon}
+              </div>
+            )}
+            <h2 className={textStyles.heading.h2}>{title}</h2>
+          </div>
+          {description && (
+            <p className={textStyles.body.normal}>{description}</p>
+          )}
+        </div>
+        {actionElement && (
+          <div className="flex-shrink-0">
+            {actionElement}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

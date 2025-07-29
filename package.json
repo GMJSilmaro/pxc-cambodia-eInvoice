@@ -81,6 +81,8 @@
     "@types/crypto-js": "^4.2.2",
     "@types/qrcode": "^1.5.5",
     "@types/uuid": "^10.0.0",
-    "@types/xml2js": "^0.4.14"
+    "@types/xml2js": "^0.4.14",
+    "eslint": "^9.32.0",
+    "eslint-config-next": "15.4.4"
   }
 }
